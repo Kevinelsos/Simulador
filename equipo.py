@@ -17,13 +17,14 @@ class Client:
     host: str
     port: int
     sock: socket.socket
+    server_port: int
 
     def __init__(self, host: str, port: int):
         self.host = host
         self.port = port
+        self.server_port = port  # Puerto inicial de conexión
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.settimeout(SOCKET_TIMEOUT)
-        self.server_port = port
 
     def send(self, data: str):
         self.sock.sendto(data.encode(), (self.host, self.server_port))
@@ -31,38 +32,11 @@ class Client:
     def receive(self, buffer_size: int = BUFFER_SIZE) -> str:
         try:
             msg, addr = self.sock.recvfrom(buffer_size)
-            # Guardar el puerto del servidor (nuevo)
+            # Captura dinámicamente el puerto del servidor
             self.server_port = addr[1]
             return msg.decode(errors="ignore").strip()
         except socket.timeout:
             return ""
-
-
-@dataclass
-class Client:
-    host: str
-    port: int
-    sock: socket.socket
-
-    def __init__(self, host: str, port: int):
-        self.host = host
-        self.port = port
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(SOCKET_TIMEOUT)
-
-    def send(self, data: str):
-        _ = self.sock.sendto(data.encode(), (self.host, self.port))
-
-    def receive(self, buffer_size: int = BUFFER_SIZE) -> str:
-        try:
-            msg, _ = self.sock.recvfrom(buffer_size)
-            return msg.decode(errors="ignore").strip()
-        except socket.timeout:
-            return "Timeout"
-
-    def close(self):
-        self.sock.close()
-
 
 @dataclass
 class Player:
@@ -80,7 +54,7 @@ class Player:
             raise RuntimeError("Client not initialized")
 
         is_goalie = " (goalie)" if self.role == "GK" else ""
-        init_msg = f"(init {self.team}{is_goalie} (version 19){is_goalie})"
+        init_msg = f"(init {self.team} (version 19){is_goalie})"
         self.client.send(init_msg)
 
         # Esperar respuesta del servidor
