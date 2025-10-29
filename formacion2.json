@@ -1,0 +1,12 @@
+{
+  "team_name": "DIM",
+  "players": [
+    {"id": 1, "name": "portero", "x": -36, "y": 0, "role": "GK"},
+    {"id": 2, "name": "defensa1", "x": -30, "y": -20, "role": "DF"},
+    {"id": 3, "name": "defensa2", "x": -30, "y": -8, "role": "DF"},
+    {"id": 4, "name": "mediocampo", "x": -30, "y": 8, "role": "MF"},
+    {"id": 5, "name": "delantero1", "x": -30, "y": 20, "role": "FW"},
+    {"id": 6, "name": "delantero2", "x": -15, "y": 0.19, "role": "FW"}
+  ]
+}
+
