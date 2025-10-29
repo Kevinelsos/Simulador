@@ -1,1 +1,0 @@
-/home/gerarc/Workspace/Simulador/equipo.py
