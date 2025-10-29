@@ -93,22 +93,25 @@ class Player:
             return None
 
     def dash(self, force: int):
-        if self.client:
-            dash_command = f"(dash {force})"
-            self.client.send(dash_command)
-            time.sleep(0.2)
+        if not self.client:
+            raise RuntimeError("Client not initialized")
+        dash_command = f"(dash {force})"
+        self.client.send(dash_command)
+        time.sleep(0.2)
 
     def kick(self, force: int, direction: int):
-        if self.client:
-            dash_command = f"(kick {force} {direction})"
-            self.client.send(dash_command)
-            time.sleep(0.2)
+        if not self.client:
+            raise RuntimeError("Client not initialized")
+        dash_command = f"(kick {force} {direction})"
+        self.client.send(dash_command)
+        time.sleep(0.2)
 
     def move_to_initial_position(self):
-        if self.client:
-            move_command = f"(move {self.x} {self.y})"
-            print(f"Moviendo a {self.name} a ({self.x}, {self.y})")
-            self.client.send(move_command)
+        if not self.client:
+            raise RuntimeError("Client not initialized")
+        move_command = f"(move {self.x} {self.y})"
+        self.client.send(move_command)
+        print(f"Moviendo a {self.name} a ({self.x}, {self.y})")
 
 
 # --- Lógica individual de cada jugador ---
@@ -124,7 +127,6 @@ def iniciar_jugador(player: Player):
 
     # --- Mover jugador a su posición inicial ---
     player.move_to_initial_position()
-    print(f"🚀 Jugador {player.id} movido a posición ({player.x}, {player.y})")
 
     # --- Comportamiento según el rol ---
     try:
