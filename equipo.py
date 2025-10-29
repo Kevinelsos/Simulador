@@ -107,6 +107,7 @@ class Player:
     def move_to_initial_position(self):
         if self.client:
             move_command = f"(move {self.x} {self.y})"
+            print(f"Moviendo a {self.name} a ({self.x}, {self.y})")
             self.client.send(move_command)
 
 
