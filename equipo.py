@@ -80,7 +80,7 @@ class Player:
             raise RuntimeError("Client not initialized")
 
         is_goalie = " (goalie)" if self.role == "GK" else ""
-        init_msg = f"(init {self.team}{is_goalie} (version 19)({is_goalie})"
+        init_msg = f"(init {self.team}{is_goalie} (version 19){is_goalie}"
         self.client.send(init_msg)
 
         # Esperar respuesta del servidor
