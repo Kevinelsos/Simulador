@@ -3,7 +3,7 @@ import multiprocessing
 import socket
 import time
 from dataclasses import dataclass
-from typing import final
+from typing import Optional
 
 SERVER_IP = "127.0.0.1"
 SERVER_PORT = 6000
@@ -22,16 +22,43 @@ class Client:
         self.host = host
         self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(2.0)
-
-    def connect(self):
-        self.sock.connect((self.host, self.port))
+        self.sock.settimeout(SOCKET_TIMEOUT)
+        self.server_port = port
 
     def send(self, data: str):
-        self.sock.sendall(data.encode())
+        self.sock.sendto(data.encode(), (self.host, self.server_port))
 
     def receive(self, buffer_size: int = BUFFER_SIZE) -> str:
-        return self.sock.recv(buffer_size).decode(errors="ignore").strip()
+        try:
+            msg, addr = self.sock.recvfrom(buffer_size)
+            # Guardar el puerto del servidor (nuevo)
+            self.server_port = addr[1]
+            return msg.decode(errors="ignore").strip()
+        except socket.timeout:
+            return ""
+
+
+@dataclass
+class Client:
+    host: str
+    port: int
+    sock: socket.socket
+
+    def __init__(self, host: str, port: int):
+        self.host = host
+        self.port = port
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.settimeout(SOCKET_TIMEOUT)
+
+    def send(self, data: str):
+        _ = self.sock.sendto(data.encode(), (self.host, self.port))
+
+    def receive(self, buffer_size: int = BUFFER_SIZE) -> str:
+        try:
+            msg, _ = self.sock.recvfrom(buffer_size)
+            return msg.decode(errors="ignore").strip()
+        except socket.timeout:
+            return "Timeout"
 
     def close(self):
         self.sock.close()
@@ -40,16 +67,30 @@ class Client:
 @dataclass
 class Player:
     id: str
+    name: str
     x: int
     y: int
     role: str
-    team: str
-    playing: bool
-    client: Client
+    team: str | None = None
+    playing: bool = False
+    client: Client | None = None
 
     def initializate_player(self):
+        if not self.client:
+            raise RuntimeError("Client not initialized")
+
         is_goalie = " (goalie)" if self.role == "GK" else ""
-        init_msg = f"(init {self.team} (version 19))"
+        init_msg = f"(init {self.team}{is_goalie} (version 19)({is_goalie})"
+        self.client.send(init_msg)
+
+        # Esperar respuesta del servidor
+        try:
+            reply = self.client.receive()
+            print(f"🔗 Servidor respondió a {self.name}: {reply}")
+            return reply
+        except socket.timeout:
+            print(f"⚠️ {self.name} no recibió respuesta de init.")
+            return None
 
     def dash(self, force: int):
         if self.client:
@@ -74,8 +115,7 @@ def iniciar_jugador(player: Player):
     player.client = Client(SERVER_IP, SERVER_PORT)
 
     try:
-        player.client.connect()
-        player.initializate_player()
+        print(player.initializate_player())
         print(f"✅ Jugador {player.id} conectado al servidor")
     except socket.timeout:
         print(f"❌ Jugador {player.id} no recibió respuesta del servidor.")
@@ -108,13 +148,11 @@ def iniciar_jugador(player: Player):
                     player.kick(100, 0)
                     print(f"💥 Jugador {player.id} patea el balón")
 
-                if(player.playing): 
+                if player.playing:
                     player.dash(80)
 
             except socket.timeout:
                 continue
-            finally:
-                player.client.close()
 
     except KeyboardInterrupt:
         print(f"🟥 Jugador {player.id} desconectado.")
