@@ -1,18 +1,10 @@
 import socket
-import time
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
 
 from config import *
-
-
-class Role(Enum):
-    GOALKEEPER = "GK"
-    DEFENSE = "DF"
-    MIDDLE = "MF"
-    FORWARD = "FW"
-
 
 @dataclass
 class Client:
@@ -26,12 +18,12 @@ class Client:
         self.port = port
         self.server_port = port  # Puerto inicial de conexión
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.sock.settimeout(SOCKET_TIMEOUT)
+        self.sock.settimeout(DEFAULT_SOCKET_TIMEOUT)
 
     def send(self, data: str) -> None:
-        _ = self.sock.sendto(data.encode(), (self.host, self.server_port))
+        self.sock.sendto(data.encode(), (self.host, self.server_port))
 
-    def receive(self, buffer_size: int = BUFFER_SIZE) -> str:
+    def receive(self, buffer_size: int = DEFAULT_BUFFER_SIZE) -> str:
         try:
             msg, addr = self.sock.recvfrom(buffer_size)
             # Captura dinámicamente el puerto del servidor
@@ -40,9 +32,26 @@ class Client:
         except socket.timeout:
             return "There Was a Timeout connecting to "
 
+class Entity(ABC):
+    pass
+
+class Role(Enum):
+    GOALKEEPER = "GK"
+    DEFENSE = "DF"
+    MIDDLE = "MF"
+    FORWARD = "FW"
+
+
+class Behavior(ABC):
+    """Abstract base class for player behaviors."""
+
+    @abstractmethod
+    def perform(self, player: Entity, state: str) -> None:
+        """Defines how a player behaves given the current game state."""
+        pass
 
 @dataclass
-class Player:
+class Player(Entity):
     id: str
     name: str
     x: int
@@ -51,6 +60,7 @@ class Player:
     team: str | None = None
     playing: bool = False
     client: Client | None = None
+    action: Behavior | None = None
 
     def initializate_player(self):
         if not self.client:
@@ -74,14 +84,12 @@ class Player:
             raise RuntimeError("Client not initialized")
         dash_command = f"(dash {force})"
         self.client.send(dash_command)
-        time.sleep(0.2)
 
     def kick(self, force: int, direction: int):
         if not self.client:
             raise RuntimeError("Client not initialized")
         dash_command = f"(kick {force} {direction})"
         self.client.send(dash_command)
-        time.sleep(0.2)
 
     def move_to_initial_position(self):
         if not self.client:
@@ -89,3 +97,11 @@ class Player:
         move_command = f"(move {self.x} {self.y})"
         self.client.send(move_command)
         print(f"Moviendo a {self.name} a ({self.x}, {self.y})")
+
+    def act(self):
+        if not self.client:
+            raise RuntimeError("Client not initialized")
+        if not self.action:
+            raise RuntimeError("Behavior not initialized")
+        state = self.client.receive()
+        self.action.perform(self, state)
