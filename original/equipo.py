@@ -3,13 +3,15 @@ import multiprocessing
 import socket
 import time
 from dataclasses import dataclass
-from typing import Optional
+from typing import Callable
 
 SERVER_IP = "127.0.0.1"
 SERVER_PORT = 6000
-TEAM_NAME = "Nacional"
 BUFFER_SIZE = 8192
 SOCKET_TIMEOUT = 2.0
+
+BehaviorFn = Callable[[Player, str], None]
+
 
 
 @dataclass
@@ -89,11 +91,11 @@ class Player:
 
 
 # --- Lógica individual de cada jugador ---
-def iniciar_jugador(player: Player):
+def player_handler(player: Player, behavior: BehaviorFn):
     player.client = Client(SERVER_IP, SERVER_PORT)
 
     try:
-        print(player.initializate_player())
+        player.initializate_player()
         print(f"✅ Jugador {player.id} conectado al servidor")
     except socket.timeout:
         print(f"❌ Jugador {player.id} no recibió respuesta del servidor.")
@@ -138,33 +140,33 @@ def iniciar_jugador(player: Player):
 # --- PROGRAMA PRINCIPAL ---
 if __name__ == "__main__":
     with open("formacion.json", "r") as f:
-        formacion = json.load(f)
+        formation = json.load(f)
 
-    print(f"⚙️  Cargando equipo: {formacion['team_name']}")
+    print(f"⚙️  Cargando equipo: {formation['team_name']}")
 
-    jugadores = [Player(**jugador) for jugador in formacion["players"]]
+    players = [Player(**player) for player in formation["players"]]
 
-    procesos = []
+    processes: list[multiprocessing.Process] = []
 
     # --- Lanzar jugadores en procesos paralelos ---
-    for jugador in jugadores:
-        jugador.team = formacion["team_name"]
-        jugador.playing = False
+    for player in players:
+        player.team = formation["team_name"]
+        player.playing = False
         print(
-            f"🚀 Iniciando jugador {jugador.id} ({jugador.role}) en X={jugador.x} Y={jugador.y}"
+            f"🚀 Iniciando jugador {player.id} ({player.role}) en X={player.x} Y={player.y}"
         )
-        p = multiprocessing.Process(target=iniciar_jugador, args=(jugador,))
-        p.start()
-        procesos.append(p)
+        process = multiprocessing.Process(target=player_handler, args=(player,))
+        process.start()
+        processes.append(process)
         time.sleep(0.3)  # pequeño delay para no saturar el servidor
 
     print("✅ Todos los jugadores han sido iniciados.")
 
     # --- Mantener equipo activo ---
     try:
-        for p in procesos:
-            p.join()
+        for process in processes:
+            process.join()
     except KeyboardInterrupt:
         print("🟥 Finalizando equipo...")
-        for p in procesos:
-            p.terminate()
+        for process in processes:
+            process.terminate()
