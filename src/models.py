@@ -1,9 +1,17 @@
 import socket
 import time
 from dataclasses import dataclass
+from enum import Enum
 from typing import Callable
 
 from config import *
+
+
+class Role(Enum):
+    GOALKEEPER = "GK"
+    DEFENSE = "DF"
+    MIDDLE = "MF"
+    FORWARD = "FW"
 
 
 @dataclass
@@ -39,7 +47,7 @@ class Player:
     name: str
     x: int
     y: int
-    role: str
+    role: Role
     team: str | None = None
     playing: bool = False
     client: Client | None = None
@@ -48,7 +56,7 @@ class Player:
         if not self.client:
             raise RuntimeError("Client not initialized")
 
-        is_goalie = " (goalie)" if self.role == "GK" else ""
+        is_goalie = " (goalie)" if self.role == Role.GOALKEEPER else ""
         init_msg = f"(init {self.team} (version 19){is_goalie})"
         self.client.send(init_msg)
 
@@ -81,6 +89,3 @@ class Player:
         move_command = f"(move {self.x} {self.y})"
         self.client.send(move_command)
         print(f"Moviendo a {self.name} a ({self.x}, {self.y})")
-
-
-BehaviorFn = Callable[[Player, str], None]
