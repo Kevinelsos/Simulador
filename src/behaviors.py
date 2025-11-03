@@ -3,50 +3,46 @@ from typing import cast, override
 from models import Behavior, Entity, Player, Role
 
 
-class GoalKeeperBehavior(Behavior):
+class GoalKeeperBehavior(Behavior[Player]):
     """Behavior of a GoalKeeper"""
 
     @override
-    def perform(self, entity: Entity, state: str) -> None:
-        player = cast(Player, entity)
+    def perform(self, entity: Player, state: str) -> None:
         if "ball" in state:
-            print(f"🧤 {player.name} se prepara para atajar")
+            print(f"🧤 {entity.name} se prepara para atajar")
         else:
             pass
 
 
-class DefenseBehavior(Behavior):
+class DefenseBehavior(Behavior[Player]):
     @override
-    def perform(self, entity: Entity, state: str) -> None:
-        player = cast(Player, entity)
+    def perform(self, entity: Player, state: str) -> None:
         if "referee play_on" in state:
-            player.playing = True
-        if player.playing:
-            player.dash(50)
+            entity.playing = True
+        if entity.playing:
+            entity.dash(50)
 
 
-class MiddleBehavior(Behavior):
+class MiddleBehavior(Behavior[Player]):
     @override
-    def perform(self, entity: Entity, state: str) -> None:
-        player = cast(Player, entity)
+    def perform(self, entity: Player, state: str) -> None:
         if "referee play_on" in state:
-            player.playing = True
-        if player.playing:
-            player.dash(70)
+            entity.playing = True
+        if entity.playing:
+            entity.dash(70)
 
 
-class AttackBehavior(Behavior):
+class AttackBehavior(Behavior[Player]):
     @override
-    def perform(self, entity: Entity, state: str) -> None:
-        player = cast(Player, entity)
+    def perform(self, entity: Player, state: str) -> None:
         if "referee play_on" in state:
-            player.playing = True
+            entity.playing = True
 
         if "referee kick_off_l" in state:
-            player.kick(100, 0)
+            entity.kick(100, 0)
 
-        if player.playing:
-            player.dash(90)
+        if entity.playing:
+            entity.dash(90)
 
 
 behaviors: dict[Role, Behavior] = {

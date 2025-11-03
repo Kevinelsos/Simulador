@@ -1,0 +1,7 @@
+{
+  "team_name": "Nacional",
+  "players": [
+    {"id": 1, "name": "portero", "x": -41, "y": 0, "role": "GK"},
+    {"id": 6, "name": "delantero2", "x": -0.38, "y": 0, "role": "FW"}
+  ]
+}

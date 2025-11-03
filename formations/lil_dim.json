@@ -1,0 +1,8 @@
+{
+  "team_name": "DIM",
+  "players": [
+    {"id": 1, "name": "portero", "x": -36, "y": 0, "role": "GK"},
+    {"id": 5, "name": "delantero1", "x": -30, "y": 20, "role": "FW"}
+  ]
+}
+

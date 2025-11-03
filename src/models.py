@@ -2,7 +2,7 @@ import socket
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
+from typing import Callable, Generic, TypeVar
 
 from config import *
 
@@ -35,6 +35,8 @@ class Client:
 class Entity(ABC):
     pass
 
+E = TypeVar("E", bound="Entity")
+
 class Role(Enum):
     GOALKEEPER = "GK"
     DEFENSE = "DF"
@@ -42,11 +44,11 @@ class Role(Enum):
     FORWARD = "FW"
 
 
-class Behavior(ABC):
+class Behavior(ABC, Generic[E]):
     """Abstract base class for player behaviors."""
 
     @abstractmethod
-    def perform(self, player: Entity, state: str) -> None:
+    def perform(self, entity: E, state: str) -> None:
         """Defines how a player behaves given the current game state."""
         pass
 
@@ -60,7 +62,7 @@ class Player(Entity):
     team: str | None = None
     playing: bool = False
     client: Client | None = None
-    action: Behavior | None = None
+    action: Behavior[Entity] | None = None
 
     def initializate_player(self):
         if not self.client:
